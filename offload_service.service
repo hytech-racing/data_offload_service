@@ -3,7 +3,7 @@ Description=Ethernet Sync GUI Service
 After=network.target
 
 [Service]
-ExecStart=/usr/bin/python3 /path/to/ethernet_sync_gui.py
+ExecStart=/usr/bin/python3 /path/to/offload.py
 Environment=DISPLAY=:0  # Required for GUI applications
 Restart=always
 
