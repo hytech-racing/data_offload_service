@@ -1,13 +1,13 @@
-{ config, lib, pkgs, ... }:
+{ config, pkgs, ... }:
 
 {
-    options.data-offload-service.enable = lib.mkOption {
-        type = lib.types.bool;
+    options.data_offload_service.enable = pkgs.lib.mkOption {
+        type = pkgs.lib.types.bool;
         default = true;
         description = "Enable or disable the data offloading service";
     };
 
-    config = lib.mkIf config.drivebrain-service.enable {
+    config = pkgs.lib.mkIf config.data_offload_service.enable {
 
         systemd.services.data-offload-service = {
             description = "Data Offload Service";
