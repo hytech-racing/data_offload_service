@@ -1,6 +1,6 @@
 { config, pkgs, ... }:
 
-{
+rec {
     options.data_offload_service.enable = pkgs.lib.mkOption {
         type = pkgs.lib.types.bool;
         default = true;
