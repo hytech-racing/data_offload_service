@@ -7,7 +7,7 @@
         description = "Enable or disable the data offloading service";
     };
 
-    config = pkgs.lib.mkIf config.data_offload_service.enable {
+    config = pkgs.lib.mkIf options.data_offload_service.enable {
 
         systemd.services.data-offload-service = {
             description = "Data Offload Service";
