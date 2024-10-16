@@ -33,10 +33,11 @@
                             description = "Data Offload Service";
                             wantedBy = [ "multi-user.target" ];
                             after = [ "network.target" ];
-
+                            environment =  {
+                                DISPLAY=":0";
+                            };
                             serviceConfig = {
                                 After = [ "network.target" ];
-                                Environment = "PATH=/foo/bar/bin";
                                 ExecStart = "${pkgs.data_offloading_service}/bin/offload.py";
                                 Restart = "always";
                             };
