@@ -25,7 +25,6 @@
                 packages.x86_64-linux.default = import ./default.nix { inherit pkgs; }; # for testing purposes
 
                 nixosModules.data-offload-service = { config, pkgs, ... }:
-
                 {
 
                     config =  {
@@ -37,7 +36,7 @@
 
                             serviceConfig = {
                                 After = [ "network.target" ];
-                                ExecStart = "/usr/bin/python3 ${pkgs.data_offload_service}/bin/offload.py";
+                                ExecStart = "/usr/bin/python3 ${pkgs.data_offloading_service}/bin/offload.py";
                                 Restart = "always";
                             };
                         };
