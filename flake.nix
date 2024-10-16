@@ -36,6 +36,7 @@
                             environment =  {
                                 DISPLAY=":0";
                                 XAUTHORITY="/run/user/1000/.mutter-Xwaylandauth.ZIBAV2";
+                            };
                             serviceConfig = {
                                 After = [ "network.target" ];
                                 ExecStart = "${pkgs.data_offloading_service}/bin/offload.py";
