@@ -5,7 +5,7 @@
         type = lib.types.bool;
         default = true;
         description = "Enable or disable the data offloading service";
-    }
+    };
 
     config = lib.mkIf config.drivebrain-service.enable {
 
