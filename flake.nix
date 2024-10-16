@@ -27,13 +27,8 @@
                 nixosModules.data-offload-service = { config, pkgs, ... }:
 
                 {
-                    options.data_offload_service.enable = pkgs.lib.mkOption {
-                        type = pkgs.lib.types.bool;
-                        default = false;
-                        description = "Enable or disable the data offloading service";
-                    };
 
-                    config = pkgs.lib.mkIf config.data_offload_service.enable {
+                    config =  {
 
                         systemd.services.data-offload-service = {
                             description = "Data Offload Service";
