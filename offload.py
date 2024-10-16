@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 import psutil
 import subprocess
 import socket
