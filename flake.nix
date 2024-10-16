@@ -34,7 +34,7 @@
                             wantedBy = [ "multi-user.target" ];
                             after = [ "network.target" ];
                             environment =  {
-                                DISPLAY=":0";
+                                DISPLAY="unix:0";
                             };
                             serviceConfig = {
                                 After = [ "network.target" ];
