@@ -36,7 +36,7 @@
 
                             serviceConfig = {
                                 After = [ "network.target" ];
-                                ExecStart = "/usr/bin/python3 ${pkgs.data_offloading_service}/bin/offload.py";
+                                ExecStart = "${pkgs.data_offloading_service}/bin/offload.py";
                                 Restart = "always";
                             };
                         };
