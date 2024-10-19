@@ -11,14 +11,14 @@ from pathlib import Path
 import shutil
 
 # Configuration variables
-INTERFACE = "enp0s13f0u4c2"  # Replace with your Ethernet interface
-LOCAL_DIR = "/home/ben/temp_mcap_dir"
-REMOTE_USER = "nixos"
-REMOTE_HOST = "192.168.1.69"
-REMOTE_DIR = "/home/nixos/recordings"
+INTERFACE = "enp1s0"  # Replace with your Ethernet interface
+LOCAL_DIR = "/home/krish/temp_mcap_dir"
+REMOTE_USER = "hytech"
+REMOTE_HOST = "131.211.84.78"
+REMOTE_DIR = "/home/hytech/recordings"
 SSH_KEY = "~/.ssh/id_ed25519"
 SSH_PORT = 22
-SYNC_DEST_BASE = "/home/ben/hytech_mcaps/synced_data/"  # Where timestamped folders will be stored
+SYNC_DEST_BASE = "/home/krish/hytech_mcaps/synced_data/"  # Where timestamped folders will be stored
 
 class EthernetSyncApp:
     def __init__(self, root):
@@ -67,25 +67,53 @@ class EthernetSyncApp:
             self.update_ssh_status(f"Unavailable: {e}")
             return False
 
-    def sync_directory(self):
-        """Sync the directories using rsync over SSH."""
-        rsync_command = [
-            "rsync", "-avz",
-            "-e", f"ssh -i {SSH_KEY}",
-            f"{REMOTE_USER}@{REMOTE_HOST}:{REMOTE_DIR}", LOCAL_DIR
+    def list_remote_files(self):
+        """List files on the remote server using SSH."""
+        ssh_command = [
+            "ssh", "-i", SSH_KEY, f"{REMOTE_USER}@{REMOTE_HOST}",
+            f"ls {REMOTE_DIR}"
         ]
         try:
-            self.update_rsync_status("In Progress...")
-            subprocess.run(rsync_command, check=True)
-            self.update_rsync_status("Completed")
-
-            # Move the synced files to a timestamped folder
-            self.move_to_timestamped_folder()
+            result = subprocess.run(ssh_command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, check=True)
+            remote_files = result.stdout.splitlines()
+            return set(remote_files)
         except subprocess.CalledProcessError as e:
-            self.update_rsync_status(f"Error: {e}")
+            self.update_rsync_status(f"SSH Error: {e}")
+            return set()
 
-    def move_to_timestamped_folder(self):
-        """Move the synced files to a timestamped folder."""
+    def list_local_files(self):
+        """List files in the local directory."""
+        return {item.name for item in Path(LOCAL_DIR).iterdir()}
+
+    def sync_directory(self):
+        """Sync only the new files from remote directory to local."""
+        remote_files = self.list_remote_files()
+        local_files = self.list_local_files()
+
+        # Calculate the difference - files that are on the remote but not locally
+        new_files = remote_files - local_files
+
+        if new_files:
+            rsync_command = [
+                "rsync", "-avz",
+                "-e", f"ssh -i {SSH_KEY}",
+                *[f"{REMOTE_USER}@{REMOTE_HOST}:{REMOTE_DIR}/{file}" for file in new_files],
+                LOCAL_DIR
+            ]
+            try:
+                self.update_rsync_status("In Progress...")
+                subprocess.run(rsync_command, check=True)
+                self.update_rsync_status("Completed")
+
+                # Move the newly synced files to a timestamped folder
+                self.move_to_timestamped_folder(new_files)
+            except subprocess.CalledProcessError as e:
+                self.update_rsync_status(f"Error: {e}")
+        else:
+            self.update_rsync_status("No New Files to Sync")
+
+    def move_to_timestamped_folder(self, new_files):
+        """Move the newly synced files to a timestamped folder."""
         timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
         destination = Path(SYNC_DEST_BASE) / timestamp
 
@@ -93,9 +121,13 @@ class EthernetSyncApp:
             # Create the destination folder if it doesn't exist
             destination.mkdir(parents=True, exist_ok=True)
 
-            # Move all files from the local directory to the timestamped folder
-            for item in Path(LOCAL_DIR).iterdir():
-                shutil.move(str(item), destination / item.name)
+            # Move only the newly synced files
+            for file in new_files:
+                item = Path(LOCAL_DIR) / file
+                if item.is_dir():
+                    shutil.copytree(str(item), destination / item.name)
+                else:
+                    shutil.copy2(item, destination / item.name)
 
             self.update_rsync_status(f"Files moved to: {destination}")
         except Exception as e:
@@ -125,3 +157,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+    
