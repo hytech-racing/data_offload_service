@@ -36,6 +36,7 @@
                             environment =  {
                                 DISPLAY=":0";
                                 XAUTHORITY="/run/user/1000/.mutter-Xwaylandauth.W1J4V2";
+                                PATH="/run/current-system/sw/bin:usr/local/bin:usr/bin:/bin";
                             };
                             serviceConfig = {
                                 After = [ "network.target" ];
