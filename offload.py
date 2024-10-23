@@ -70,7 +70,7 @@ class EthernetSyncApp:
     def list_remote_files(self):
         """List files on the remote server using SSH."""
         ssh_command = [
-            "ssh", "-i", SSH_KEY, f"{REMOTE_USER}@{REMOTE_HOST}",
+            "/run/current-system/sw/bin/ssh", "-i", SSH_KEY, f"{REMOTE_USER}@{REMOTE_HOST}",
             f"ls {REMOTE_DIR}"
         ]
         try:
