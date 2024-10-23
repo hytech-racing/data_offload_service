@@ -11,14 +11,14 @@ from pathlib import Path
 import shutil
 
 # Configuration variables
-INTERFACE = "enp1s0"  # Replace with your Ethernet interface
-LOCAL_DIR = "/home/krish/temp_mcap_dir"
-REMOTE_USER = "hytech"
-REMOTE_HOST = "131.211.84.78"
+INTERFACE = "enp0s13f0ul"  # Replace with your Ethernet interface
+LOCAL_DIR = "/home/hytech/hytech_data/temp_mcap_dir"
+REMOTE_USER = "nixos"
+REMOTE_HOST = "192.168.1.69"
 REMOTE_DIR = "/home/hytech/recordings"
 SSH_KEY = "~/.ssh/id_ed25519"
 SSH_PORT = 22
-SYNC_DEST_BASE = "/home/krish/hytech_mcaps/synced_data/"  # Where timestamped folders will be stored
+SYNC_DEST_BASE = "/home/hytech/hytech_mcaps/synced_data/"  # Where timestamped folders will be stored
 
 class EthernetSyncApp:
     def __init__(self, root):
