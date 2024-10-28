@@ -35,7 +35,7 @@
                             after = [ "network.target" ];
                             environment =  {
                                 DISPLAY=":0";
-                                XAUTHORITY="/run/user/1000/.mutter-Xwaylandauth.W1J4V2";
+                                XAUTHORITY="/run/user/1000/.mutter-Xwaylandauth.*";
                             };
                             serviceConfig = {
                                 After = [ "network.target" ];
