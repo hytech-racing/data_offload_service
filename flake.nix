@@ -34,7 +34,7 @@
                             wantedBy = [ "multi-user.target" ];
                             after = [ "network.target" ];
                             preStart = ''
-                                AUTH_FILE=$(find /run/user/1000 -name ".mutter-Waylandauth.*" | head -n 1)
+                                AUTH_FILE=$(find /run/user/1000 -name ".mutter-Xwaylandauth.*" | head -n 1)
                                 if [ -z "$AUTH_FILE" ]; then
                                     echo "WAYLAND_AUTH_PATH not found!" >&2
                                     exit 1
