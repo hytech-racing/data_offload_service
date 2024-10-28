@@ -128,7 +128,7 @@ class EthernetSyncApp:
                 else:
                     shutil.copy2(item, destination / item.name)
 
-            self.update_rsync_status(f"Files moved to: {destination}")
+            self.update_rsync_status(f"Files moved to: Debugging")
         except Exception as e:
             self.update_rsync_status(f"Move Error: Womp womp ")
 
