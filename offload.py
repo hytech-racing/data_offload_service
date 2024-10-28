@@ -97,7 +97,7 @@ class EthernetSyncApp:
             print(f)
 
         if new_files:
-            rsync_command = f"/run/current-system/sw/bin/rsync -avz -e '/run/current-system/sw/bin/ssh -i {SSH_KEY}' {' '.join([f'{REMOTE_USER}@{REMOTE_HOST}:{REMOTE_DIR}/{file}' for file in new_files])} {LOCAL_DIR}"
+            rsync_command = f"/run/current-system/sw/bin/rsync -av -e '/run/current-system/sw/bin/ssh -i {SSH_KEY}' {' '.join([f'{REMOTE_USER}@{REMOTE_HOST}:{REMOTE_DIR}/{file}' for file in new_files])} {LOCAL_DIR}"
             try:
                 self.update_rsync_status("In Progress...")
                 subprocess.run(rsync_command, check=True)
