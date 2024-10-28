@@ -99,6 +99,7 @@ class EthernetSyncApp:
         if new_files:
             rsync_command = [
                 "/run/current-system/sw/bin/rsync", "-avz",
+                "-e", "/run/current-system/sw/bin/ssh",  
                 *[f"{REMOTE_USER}@{REMOTE_HOST}:{REMOTE_DIR}/{file}" for file in new_files],
                 LOCAL_DIR
             ]
