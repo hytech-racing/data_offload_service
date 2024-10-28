@@ -33,17 +33,21 @@
                             description = "Data Offload Service";
                             wantedBy = [ "multi-user.target" ];
                             after = [ "network.target" ];
+                            preStart = ''
+                                AUTH_FILE=$(find /run/user/1000 -name ".mutter-Waylandauth.*" | head -n 1)
+                                if [ -z "$AUTH_FILE" ]; then
+                                    echo "WAYLAND_AUTH_PATH not found!" >&2
+                                    exit 1
+                                fi
+                                export XAUTHORITY=$AUTH_FILE
+                            '';
                             environment =  {
                                 DISPLAY=":0";
-                                # XAUTHORITY="$(find run/user/1000 -name .mutter-Waylandauth*)";
+                                # XAUTHORITY="/run/user/1000/.mutter-Xwaylandauth.W1J4V2";
                             };
                             serviceConfig = {
                                 After = [ "network.target" ];
-                                ExecStart = "${pkgs.writeShellScriptBin "start-myservice" ''
-                                    #!/bin/bash
-                                    export DISPLAY=":0"
-                                    export XAUTHORITY=$(find /run/user/1000 -name .mutter-Waylandauth*)''}
-                                    ${pkgs.data_offloading_service}/bin/offload.py";
+                                ExecStart = "${pkgs.data_offloading_service}/bin/offload.py";
                                 Restart = "always";
                             };
                         };
