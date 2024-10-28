@@ -35,11 +35,15 @@
                             after = [ "network.target" ];
                             environment =  {
                                 DISPLAY=":0";
-                                XAUTHORITY="/run/user/1000/.mutter-Xwaylandauth.*";
+                                # XAUTHORITY="$(find run/user/1000 -name .mutter-Waylandauth*)";
                             };
                             serviceConfig = {
                                 After = [ "network.target" ];
-                                ExecStart = "${pkgs.data_offloading_service}/bin/offload.py";
+                                ExecStart = "${pkgs.writeScript "start-myservice" ''
+                                    #!/bin/bash
+                                    export DISPLAY=":0"
+                                    export XAUTHORITY=$(find /run/user/1000 -name .mutter-Waylandauth*)''}
+                                    ${pkgs.data_offloading_service}/bin/offload.py";
                                 Restart = "always";
                             };
                         };
