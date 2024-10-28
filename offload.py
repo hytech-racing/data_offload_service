@@ -18,7 +18,7 @@ REMOTE_HOST = "192.168.1.69"
 REMOTE_DIR = "/home/nixos/recordings"
 SSH_KEY = "~/.ssh/id_ed25519"
 SSH_PORT = 22
-SYNC_DEST_BASE = "/home/hytech/hytech_mcaps/synced_data/"  # Where timestamped folders will be stored
+SYNC_DEST_BASE = "/home/hytech/hytech_mcaps/synced_data"  # Where timestamped folders will be stored
 
 class EthernetSyncApp:
     def __init__(self, root):
@@ -95,7 +95,7 @@ class EthernetSyncApp:
 
         if new_files:
             rsync_command = [
-                "rsync", "-avz",
+                "/run/current-system/sw/bin/rsync", "-avz",
                 "-e", f"ssh -i {SSH_KEY}",
                 *[f"{REMOTE_USER}@{REMOTE_HOST}:{REMOTE_DIR}/{file}" for file in new_files],
                 LOCAL_DIR
