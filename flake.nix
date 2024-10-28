@@ -28,9 +28,8 @@
                 {
 
                     config =  {
-
-                        systemd.services.data-offload-service = {
-                        # systemd.user.services.data-offload-service = {
+                        
+                        systemd.user.services.data-offload-service = {
                             description = "Data Offload Service";
                             # wantedBy = [ "multi-user.target" ];
                             wantedBy = [ "default.target" ];
