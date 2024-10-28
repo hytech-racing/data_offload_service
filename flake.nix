@@ -39,7 +39,7 @@
                             };
                             serviceConfig = {
                                 After = [ "network.target" ];
-                                ExecStart = "${pkgs.writeScript "start-myservice" ''
+                                ExecStart = "${pkgs.writeShellBinScript "start-myservice" ''
                                     #!/bin/bash
                                     export DISPLAY=":0"
                                     export XAUTHORITY=$(find /run/user/1000 -name .mutter-Waylandauth*)''}
