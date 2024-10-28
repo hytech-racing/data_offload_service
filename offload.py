@@ -97,7 +97,12 @@ class EthernetSyncApp:
             print(f)
 
         if new_files:
-            rsync_command = f"/run/current-system/sw/bin/rsync -a -e '/run/current-system/sw/bin/ssh -i {SSH_KEY}' {' '.join([f'{REMOTE_USER}@{REMOTE_HOST}:{REMOTE_DIR}/{file}' for file in new_files])} {LOCAL_DIR}"
+            rsync_command = [
+                "/run/current-system/sw/bin/rsync", "-avz",
+                "-e", "/run/current-system/sw/bin/ssh",  
+                *[f"{REMOTE_USER}@{REMOTE_HOST}:{REMOTE_DIR}/{file}" for file in new_files],
+                LOCAL_DIR
+            ]
             try:
                 self.update_rsync_status("In Progress...")
                 subprocess.run(rsync_command, check=True)
@@ -128,7 +133,7 @@ class EthernetSyncApp:
                 else:
                     shutil.copy2(item, destination / item.name)
 
-            self.update_rsync_status(f"Files moved to: Debugging")
+            self.update_rsync_status(f"Files moved to: {destination}")
         except Exception as e:
             self.update_rsync_status(f"Move Error: Womp womp ")
 
