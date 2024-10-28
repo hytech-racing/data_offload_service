@@ -31,7 +31,8 @@
 
                         systemd.user.services.data-offload-service = {
                             description = "Data Offload Service";
-                            wantedBy = [ "multi-user.target" ];
+                            # wantedBy = [ "multi-user.target" ];
+                            wantedBy = [ "default.target" ];
                             after = [ "network.target" ];
                             # preStart = ''
                             #     AUTH_FILE=$(find /run/user/1000 -name ".mutter-Xwaylandauth.*" | head -n 1)
