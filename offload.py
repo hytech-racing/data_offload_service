@@ -78,7 +78,7 @@ class EthernetSyncApp:
             remote_files = result.stdout.splitlines()
             return set(remote_files)
         except subprocess.CalledProcessError as e:
-            self.update_rsync_status(f"SSH Error: {e}")
+            self.update_rsync_status(f"SSH Error: Womp Womp")
             return set()
 
     def list_local_files(self):
@@ -95,7 +95,7 @@ class EthernetSyncApp:
 
         if new_files:
             rsync_command = [
-                "/run/current-system/sw/bin/rsync", "-avz",
+                "sudo /run/current-system/sw/bin/rsync", "-avz",
                 "-e", f"ssh -i {SSH_KEY}",
                 *[f"{REMOTE_USER}@{REMOTE_HOST}:{REMOTE_DIR}/{file}" for file in new_files],
                 LOCAL_DIR
