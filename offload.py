@@ -132,7 +132,7 @@ class EthernetSyncApp:
 
             self.update_rsync_status(f"Files moved to: {destination}")
         except Exception as e:
-            self.update_rsync_status(f"Move Error: {e}")
+            self.update_rsync_status(f"Move Error: Womp womp ")
 
     def monitor_ethernet(self):
         """Monitor the Ethernet interface and trigger rsync if SSH is available."""
