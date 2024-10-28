@@ -108,6 +108,7 @@ class EthernetSyncApp:
                 # Move the newly synced files to a timestamped folder
                 self.move_to_timestamped_folder(new_files)
             except subprocess.CalledProcessError as e:
+                print (f"Error: {e}")
                 self.update_rsync_status(f"Error: {e}")
         else:
             self.update_rsync_status("No New Files to Sync")
