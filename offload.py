@@ -93,9 +93,6 @@ class EthernetSyncApp:
         # Calculate the difference - files that are on the remote but not locally
         new_files = remote_files - local_files
 
-        for f in remote_files: 
-            print(f)
-
         if new_files:
             rsync_command = [
                 "/run/current-system/sw/bin/rsync", "-avz",
@@ -105,6 +102,7 @@ class EthernetSyncApp:
             ]
             try:
                 self.update_rsync_status("In Progress...")
+                print("Starting rsync")
                 subprocess.run(rsync_command, check=True)
                 self.update_rsync_status("Completed")
 
