@@ -34,7 +34,7 @@ class EthernetSyncApp:
         root.geometry(f"{window_width}x{window_height}+{x}+{y}")
 
         # GUI Elements
-        self.ssh_status_label = tk.Label(root, text="SSH Status: Not Known", font=("Arial", 24), pady=20)
+        self.ssh_status_label = tk.Label(root, text="SSH Status: N Known", font=("Arial", 24), pady=20)
         self.ssh_status_label.pack()
 
         self.rsync_status_label = tk.Label(root, text="Rsync Status: Not Started", font=("Arial", 24), pady=20)
