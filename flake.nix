@@ -43,7 +43,7 @@
                             #     export XAUTHORITY=$AUTH_FILE
                             # '';
                             environment =  {
-                                DISPLAY=":0";
+                                DISPLAY=":1";
                                 # XAUTHORITY="$XAUTHORITY";
                             };
                             serviceConfig = {
