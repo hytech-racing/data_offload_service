@@ -5,7 +5,7 @@ import socket
 import time
 import threading
 import tkinter as tk
-from tkinter import messagebox
+from tkinter import ttk
 from datetime import datetime
 from pathlib import Path
 import shutil
@@ -40,10 +40,18 @@ class EthernetSyncApp:
         self.rsync_status_label = tk.Label(root, text="Rsync Status: Not Started", font=("Arial", 24), pady=20)
         self.rsync_status_label.pack()
 
+        # Progress Bar
+        self.progress_bar = ttk.Progressbar(root, orient="horizontal", mode="determinate", length=300)
+        self.progress_bar.pack(pady=20)
+
         self.force_check_button = tk.Button(
             root, text="Force Offload", font=("Arial", 20), command=self.force_check, width=15, height=2
         )
         self.force_check_button.pack(pady=20)
+
+        # Add small font Ethernet interface list at the bottom
+        self.interface_label = tk.Label(root, text="", font=("Arial", 10))
+        self.interface_label.pack(side="bottom", pady=10)
 
         # Start the monitoring thread
         self.monitor_thread = threading.Thread(target=self.monitor_ethernet, daemon=True)
@@ -82,8 +90,12 @@ class EthernetSyncApp:
             return set()
 
     def list_local_files(self):
-        """List files in the local directory."""
-        return {item.name for item in Path(LOCAL_DIR).iterdir()}
+        """List all files in the synced_data directory and its subdirectories."""
+        local_files = set()
+        for path in Path(SYNC_DEST_BASE).rglob("*"):
+            if path.is_file():
+                local_files.add(path.name)
+        return local_files
 
     def sync_directory(self):
         """Sync only the new files from remote directory to local."""
@@ -94,23 +106,27 @@ class EthernetSyncApp:
         new_files = remote_files - local_files
 
         if new_files:
-            rsync_command = [
-                "/run/current-system/sw/bin/rsync", "-avz",
-                "-e", "/run/current-system/sw/bin/ssh",  
-                *[f"{REMOTE_USER}@{REMOTE_HOST}:{REMOTE_DIR}/{file}" for file in new_files],
-                LOCAL_DIR
-            ]
-            try:
-                self.update_rsync_status("In Progress...")
-                print("Starting rsync")
-                subprocess.run(rsync_command, check=True)
-                self.update_rsync_status("Completed")
+            self.progress_bar["maximum"] = len(new_files)
+            self.progress_bar["value"] = 0
 
-                # Move the newly synced files to a timestamped folder
-                self.move_to_timestamped_folder(new_files)
-            except subprocess.CalledProcessError as e:
-                print (f"Error: {e}")
-                self.update_rsync_status(f"Error: womp womp")
+            for idx, file in enumerate(new_files, 1):
+                rsync_command = [
+                    "/run/current-system/sw/bin/rsync", "-avz",
+                    "-e", "/run/current-system/sw/bin/ssh",
+                    f"{REMOTE_USER}@{REMOTE_HOST}:{REMOTE_DIR}/{file}",
+                    LOCAL_DIR
+                ]
+                try:
+                    self.update_rsync_status("In Progress...")
+                    subprocess.run(rsync_command, check=True)
+                    self.progress_bar["value"] = idx
+                    self.root.update_idletasks()  # Refresh the progress bar
+                except subprocess.CalledProcessError:
+                    self.update_rsync_status(f"Error: womp womp")
+                    return
+
+            self.update_rsync_status("Completed")
+            self.move_to_timestamped_folder(new_files)
         else:
             self.update_rsync_status("No New Files to Sync")
 
@@ -120,10 +136,7 @@ class EthernetSyncApp:
         destination = Path(SYNC_DEST_BASE) / timestamp
 
         try:
-            # Create the destination folder if it doesn't exist
             destination.mkdir(parents=True, exist_ok=True)
-
-            # Move only the newly synced files
             for file in new_files:
                 item = Path(LOCAL_DIR) / file
                 if item.is_dir():
@@ -132,12 +145,19 @@ class EthernetSyncApp:
                     shutil.copy2(item, destination / item.name)
 
             self.update_rsync_status(f"Files moved to: {destination}")
-        except Exception as e:
+        except Exception:
             self.update_rsync_status(f"Move Error: Womp womp ")
+
+    def update_interface_list(self):
+        """Retrieve and update the list of Ethernet interfaces."""
+        net_if_addrs = psutil.net_if_addrs()
+        ethernet_interfaces = [iface for iface in net_if_addrs if any(addr.family == socket.AF_INET for addr in net_if_addrs[iface])]
+        self.interface_label.config(text=f"Available Ethernet Interfaces: {', '.join(ethernet_interfaces)}")
 
     def monitor_ethernet(self):
         """Monitor the Ethernet interface and trigger rsync if SSH is available."""
         while True:
+            self.update_interface_list()  # Refresh the list of interfaces
             net_if_addrs = psutil.net_if_addrs()
             if INTERFACE in net_if_addrs:
                 if any(addr.family == socket.AF_INET for addr in net_if_addrs[INTERFACE]):
@@ -148,7 +168,7 @@ class EthernetSyncApp:
 
     def force_check(self):
         """Force a check of SSH availability and sync."""
-        messagebox.showinfo("Force Check", "Forcing a check of connected devices...")
+        self.update_ssh_status("Forcing a check of connected devices...")
         if self.is_ssh_available():
             self.sync_directory()
 
@@ -159,4 +179,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-    
