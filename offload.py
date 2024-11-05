@@ -99,7 +99,7 @@ class EthernetSyncApp:
 
     def sync_directory(self):
         """Sync only the new files from remote directory to local."""
-        new_files = self.list_new_files()
+        new_files = self.list_remote_files()
         local_files = self.list_local_files()
 
         if new_files:
