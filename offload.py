@@ -37,12 +37,15 @@ class EthernetSyncApp:
         self.ssh_status_label = tk.Label(root, text="SSH Status: Unknown", font=("Arial", 24), pady=20)
         self.ssh_status_label.pack()
 
-        self.rsync_status_label = tk.Label(root, text="Rsync Status: Not Started", font=("Arial", 24), pady=20)
+        self.rsync_status_label = tk.Label(root, text="Status: Not Started", font=("Arial", 24), pady=20)
         self.rsync_status_label.pack()
 
-        # Progress Bar
+        # Single Progress Bar for both Rsync and Copy operations
         self.progress_bar = ttk.Progressbar(root, orient="horizontal", mode="determinate", length=300)
         self.progress_bar.pack(pady=20)
+
+        self.file_count_label = tk.Label(root, text="Files transferred: 0 / 0", font=("Arial", 14))
+        self.file_count_label.pack()
 
         self.force_check_button = tk.Button(
             root, text="Force Offload", font=("Arial", 20), command=self.force_check, width=15, height=2
@@ -61,9 +64,9 @@ class EthernetSyncApp:
         """Update the SSH status label on the GUI."""
         self.ssh_status_label.config(text=f"SSH Status: {status}")
 
-    def update_rsync_status(self, status):
-        """Update the Rsync status label on the GUI."""
-        self.rsync_status_label.config(text=f"Rsync Status: {status}")
+    def update_status(self, status):
+        """Update the general status label on the GUI."""
+        self.rsync_status_label.config(text=f"Status: {status}")
 
     def is_ssh_available(self):
         """Check if the SSH service is available on the remote host."""
@@ -86,7 +89,7 @@ class EthernetSyncApp:
             remote_files = result.stdout.splitlines()
             return set(remote_files)
         except subprocess.CalledProcessError as e:
-            self.update_rsync_status(f"SSH Error: Womp Womp")
+            self.update_status(f"SSH Error: Unable to list files")
             return set()
 
     def list_local_files(self):
@@ -99,12 +102,14 @@ class EthernetSyncApp:
 
     def sync_directory(self):
         """Sync only the new files from remote directory to local."""
-        new_files = self.list_remote_files()
+        remote_files = self.list_remote_files()
         local_files = self.list_local_files()
+        new_files = remote_files - local_files
 
         if new_files:
             self.progress_bar["maximum"] = len(new_files)
             self.progress_bar["value"] = 0
+            self.update_status("Rsyncing files...")
 
             for idx, file in enumerate(new_files, 1):
                 rsync_command = [
@@ -114,18 +119,18 @@ class EthernetSyncApp:
                     LOCAL_DIR
                 ]
                 try:
-                    self.update_rsync_status("In Progress...")
                     subprocess.run(rsync_command, check=True)
                     self.progress_bar["value"] = idx
-                    self.root.update_idletasks()  # Refresh the progress bar
+                    self.file_count_label.config(text=f"Files transferred (rsync): {idx} / {len(new_files)}")
+                    self.root.update_idletasks()  # Refresh the progress bar and label
                 except subprocess.CalledProcessError:
-                    self.update_rsync_status(f"Error: womp womp")
+                    self.update_status("Error: Rsync failed")
                     return
 
-            self.update_rsync_status("Completed")
+            self.update_status("Rsync completed")
             self.move_to_timestamped_folder(local_files)
         else:
-            self.update_rsync_status("No New Files to Sync")
+            self.update_status("No New Files to Sync")
 
     def move_to_timestamped_folder(self, local_files):
         """Move the newly synced files to a timestamped folder."""
@@ -135,17 +140,25 @@ class EthernetSyncApp:
 
         try:
             destination.mkdir(parents=True, exist_ok=True)
-            for file in source:
-                if file not in local_files:
-                    item = source / file
-                    if item.is_dir():
-                        shutil.copytree(str(item), destination / item.name)
-                    else:
-                        shutil.copy2(item, destination / item.name)
+            new_files = [file for file in source.iterdir() if file.name not in local_files]
+            self.progress_bar["maximum"] = len(new_files)
+            self.progress_bar["value"] = 0
+            self.update_status("Copying to sync directory...")
 
-            self.update_rsync_status(f"Files moved to: {destination}")
+            for idx, file in enumerate(new_files, 1):
+                item = source / file
+                if item.is_dir():
+                    shutil.copytree(str(item), destination / item.name)
+                else:
+                    shutil.copy2(item, destination / item.name)
+                
+                self.progress_bar["value"] = idx
+                self.file_count_label.config(text=f"Files transferred (copy): {idx} / {len(new_files)}")
+                self.root.update_idletasks()  # Refresh the progress bar and file count label
+
+            self.update_status(f"Files moved to: {destination}")
         except Exception:
-            self.update_rsync_status(f"Move Error: Womp womp ")
+            self.update_status("Error: Copy failed")
 
     def update_interface_list(self):
         """Retrieve and update the list of Ethernet interfaces."""
