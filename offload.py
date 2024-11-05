@@ -161,6 +161,7 @@ class EthernetSyncApp:
             net_if_addrs = psutil.net_if_addrs()
             if INTERFACE in net_if_addrs:
                 if any(addr.family == socket.AF_INET for addr in net_if_addrs[INTERFACE]):
+                    print("Here")
                     self.update_ssh_status(f"{INTERFACE} Connected")
                     if self.is_ssh_available():
                         self.sync_directory()
