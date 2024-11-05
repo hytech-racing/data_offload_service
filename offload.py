@@ -157,11 +157,11 @@ class EthernetSyncApp:
     def monitor_ethernet(self):
         """Monitor the Ethernet interface and trigger rsync if SSH is available."""
         while True:
+            print("monitoring")
             self.update_interface_list()  # Refresh the list of interfaces
             net_if_addrs = psutil.net_if_addrs()
             if INTERFACE in net_if_addrs:
                 if any(addr.family == socket.AF_INET for addr in net_if_addrs[INTERFACE]):
-                    print("Here")
                     self.update_ssh_status(f"{INTERFACE} Connected")
                     if self.is_ssh_available():
                         self.sync_directory()
