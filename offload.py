@@ -11,7 +11,7 @@ from pathlib import Path
 import shutil
 
 # Configuration variables
-INTERFACE = "enp0s13f0ul"  # Replace with your Ethernet interface
+INTERFACE = "enp0s13f0u1"  # Replace with your Ethernet interface
 LOCAL_DIR = "/home/hytech/hytech_data/temp_mcap_dir"
 REMOTE_USER = "nixos"
 REMOTE_HOST = "192.168.1.69"
@@ -99,11 +99,7 @@ class EthernetSyncApp:
 
     def sync_directory(self):
         """Sync only the new files from remote directory to local."""
-        remote_files = self.list_remote_files()
         local_files = self.list_local_files()
-
-        # Calculate the difference - files that are on the remote but not locally
-        new_files = remote_files - local_files
 
         if new_files:
             self.progress_bar["maximum"] = len(new_files)
@@ -126,23 +122,25 @@ class EthernetSyncApp:
                     return
 
             self.update_rsync_status("Completed")
-            self.move_to_timestamped_folder(new_files)
+            self.move_to_timestamped_folder(local_files)
         else:
             self.update_rsync_status("No New Files to Sync")
 
-    def move_to_timestamped_folder(self, new_files):
+    def move_to_timestamped_folder(self, local_files):
         """Move the newly synced files to a timestamped folder."""
         timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+        source = Path(LOCAL_DIR)
         destination = Path(SYNC_DEST_BASE) / timestamp
 
         try:
             destination.mkdir(parents=True, exist_ok=True)
-            for file in new_files:
-                item = Path(LOCAL_DIR) / file
-                if item.is_dir():
-                    shutil.copytree(str(item), destination / item.name)
-                else:
-                    shutil.copy2(item, destination / item.name)
+            for file in source:
+                if file not in local_files:
+                    item = source / file
+                    if item.is_dir():
+                        shutil.copytree(str(item), destination / item.name)
+                    else:
+                        shutil.copy2(item, destination / item.name)
 
             self.update_rsync_status(f"Files moved to: {destination}")
         except Exception:
@@ -157,7 +155,6 @@ class EthernetSyncApp:
     def monitor_ethernet(self):
         """Monitor the Ethernet interface and trigger rsync if SSH is available."""
         while True:
-            print("monitoring")
             self.update_interface_list()  # Refresh the list of interfaces
             net_if_addrs = psutil.net_if_addrs()
             if INTERFACE in net_if_addrs:
