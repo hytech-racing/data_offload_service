@@ -9,6 +9,7 @@ from tkinter import ttk
 from datetime import datetime
 from pathlib import Path
 import shutil
+import requests
 
 # Configuration variables
 INTERFACE = "enp0s13f0u1"  # Replace with your Ethernet interface
@@ -19,6 +20,7 @@ REMOTE_DIR = "/home/nixos/recordings"
 SSH_KEY = "~/.ssh/id_ed25519"
 SSH_PORT = 22
 SYNC_DEST_BASE = "/home/hytech/hytech_mcaps/synced_data"  # Where timestamped folders will be stored
+DATA_ACQ_SERVER_ADDR = "https://data.hytechracing.wiki/api/v2"
 
 class EthernetSyncApp:
     def __init__(self, root):
@@ -99,6 +101,64 @@ class EthernetSyncApp:
             if path.is_file():
                 local_files.add(path.name)
         return local_files
+    
+    def remove_remote_file(self, selected_file_path):
+        selected_file_name = selected_file_path.split('/')[-1]
+        ssh_command = [
+            "/run/current-system/sw/bin/ssh", "-i", SSH_KEY, f"{REMOTE_USER}@{REMOTE_HOST}",
+            f"rm {REMOTE_DIR}/{selected_file_name}"
+        ]
+
+        try:
+            result = subprocess.run(ssh_command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, check=True)
+            if result != '':
+                return False
+
+            return result
+        except subprocess.CalledProcessError as e:
+            return f"could not remove file {selected_file_name} on remote"
+    
+    def remove_local_file(self, selected_file_path):
+        if not Path.exists(selected_file_path):
+            return f"{selected_file_path} does not exist"
+
+        Path.unlink(selected_file_path)
+
+    def choose_file_to_upload(self):
+        for path in Path(SYNC_DEST_BASE).rglob("*"):
+            if path.is_file():
+                return path.name # return the first file it finds
+
+        return None
+    
+    def upload_file(self, selected_file):
+        response = None
+        with open(selected_file, 'rb') as file:
+            files = {'file': file}  # 'file' is the field name
+            response = requests.post(f"{DATA_ACQ_SERVER_ADDR}/mcaps/upload", files=files)
+
+        if response.status_code == 200:
+            return True
+        else:
+            self.update_status(f"error in uploading file: {response.text}")
+            return False
+
+    def attempt_to_upload(self):
+        time.sleep(5)
+        selected_file = self.choose_file_to_upload()
+        if not selected_file:
+            return
+
+        successful_upload = self.upload_file(selected_file)
+        if successful_upload:
+            err = self.remove_remote_file(selected_file)
+            if err:
+                self.update_status(err)
+                return
+            err = self.remove_local_file(selected_file)
+            if err:
+                self.update_status(err)
+                return
 
     def sync_directory(self):
         """Sync only the new files from remote directory to local."""
@@ -131,6 +191,7 @@ class EthernetSyncApp:
             self.move_to_timestamped_folder(local_files)
         else:
             self.update_status("No New Files to Sync")
+            self.attempt_to_upload()
 
     def move_to_timestamped_folder(self, local_files):
         """Move the newly synced files to a timestamped folder."""
@@ -176,6 +237,10 @@ class EthernetSyncApp:
                     self.update_ssh_status(f"{INTERFACE} Connected")
                     if self.is_ssh_available():
                         self.sync_directory()
+                    else:
+                        self.attempt_to_upload()
+            else:
+                self.attempt_to_upload()
             time.sleep(5)
 
     def force_check(self):
