@@ -10,6 +10,7 @@ from datetime import datetime
 from pathlib import Path
 import shutil
 import requests
+from urllib3.connectionpool import connection_from_url
 
 # Configuration variables
 INTERFACE = "enp0s13f0u1"  # Replace with your Ethernet interface
@@ -143,7 +144,7 @@ class EthernetSyncApp:
             self.update_status(f"error in uploading file: {response.text}")
             return False
 
-    def attempt_to_upload(self):
+    def attempt_to_upload(self, connected_to_car: bool):
         time.sleep(5)
         selected_file = self.choose_file_to_upload()
         if not selected_file:
@@ -151,10 +152,11 @@ class EthernetSyncApp:
 
         successful_upload = self.upload_file(selected_file)
         if successful_upload:
-            err = self.remove_remote_file(selected_file)
-            if err:
-                self.update_status(err)
-                return
+            if connected_to_car:
+                err = self.remove_remote_file(selected_file)
+                if err:
+                    self.update_status(err)
+                    return
             err = self.remove_local_file(selected_file)
             if err:
                 self.update_status(err)
@@ -191,7 +193,7 @@ class EthernetSyncApp:
             self.move_to_timestamped_folder(local_files)
         else:
             self.update_status("No New Files to Sync")
-            self.attempt_to_upload()
+            self.attempt_to_upload(connected_to_car=True)
 
     def move_to_timestamped_folder(self, local_files):
         """Move the newly synced files to a timestamped folder."""
@@ -238,9 +240,9 @@ class EthernetSyncApp:
                     if self.is_ssh_available():
                         self.sync_directory()
                     else:
-                        self.attempt_to_upload()
+                        self.attempt_to_upload(connected_to_car=False)
             else:
-                self.attempt_to_upload()
+                self.attempt_to_upload(connected_to_car=False)
             time.sleep(5)
 
     def force_check(self):
