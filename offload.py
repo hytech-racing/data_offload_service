@@ -239,10 +239,6 @@ class EthernetSyncApp:
                     self.update_ssh_status(f"{INTERFACE} Connected")
                     if self.is_ssh_available():
                         self.sync_directory()
-                    else:
-                        self.attempt_to_upload(connected_to_car=False)
-            else:
-                self.attempt_to_upload(connected_to_car=False)
             time.sleep(5)
 
     def force_check(self):
