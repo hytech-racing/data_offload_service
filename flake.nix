@@ -3,26 +3,33 @@
 
     inputs = {
         nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+        mcap.url = "github:KrishKittur/py_mcap_nix";
     };
 
-    outputs = { self, nixpkgs, ... }:
+    outputs = { self, nixpkgs, mcap, ... }:
         let
-
-            pkgs = import nixpkgs { system = "x86_64-linux"; }; # for testing purposes
 
             data_offloading_service_overlay = final: prev: {
                 data_offloading_service = final.callPackage ./default.nix { };
             };
 
-            my_overlays = [ data_offloading_service_overlay ];
+            my_overlays = [ data_offloading_service_overlay mcap.overlays.default ];
+
+            pkgs = import nixpkgs {
+                overlays = my_overlays;
+                system = "aarch64-darwin"; 
+            };
 
         in
             {
 
                 overlays.default = nixpkgs.lib.composeManyExtensions my_overlays;
 
-                packages.x86_64-linux.data-offload-service = import ./default.nix { inherit pkgs; }; # for testing purposes
-                packages.x86_64-linux.default = import ./default.nix { inherit pkgs; }; # for testing purposes
+                packages.x86_64-linux.data-offload-service = pkgs.data_offloading_service; # for testing purposes
+                packages.x86_64-linux.default = pkgs.data_offloading_service; # for testing purposes
+
+                packages.aarch64-darwin.data-offload-service = pkgs.data_offloading_service; # for testing purposes
+                packages.aarch64-darwin.default = pkgs.data_offloading_service; # for testing purposes
 
                 nixosModules.data-offload-service = { config, pkgs, ... }:
                 {

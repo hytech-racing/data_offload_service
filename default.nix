@@ -1,16 +1,23 @@
-{ pkgs }:
+{ python311Packages, py_mcap_pkg, mcap-cli }:
 
-pkgs.python311Packages.buildPythonApplication rec {
-    
-    pname = "data_offload_service";
-    version = "1.0.0";
+python311Packages.buildPythonApplication rec {
 
-    buildInputs = [ pkgs.python311Packages.psutil pkgs.python311Packages.tkinter pkgs.python311Packages.requests];
+  pname = "data_offload_service";
+  version = "1.0.0";
 
-    propagatedBuildInputs = buildInputs;
+  buildInputs = [
+    python311Packages.psutil
+    python311Packages.tkinter
+    python311Packages.requests
+    python311Packages.lz4
+    python311Packages.zstandard
+    python311Packages.setuptools
+    py_mcap_pkg
+    mcap-cli
+  ];
 
-    nativeBuildInputs = buildInputs;
+  propagatedBuildInputs = buildInputs;
+  nativeBuildInputs =  buildInputs;
 
-    src = ./.;
-
+  src = builtins.path { path = ./.; name = "source"; };
 }
