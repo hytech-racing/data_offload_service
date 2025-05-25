@@ -8,6 +8,7 @@ import tkinter as tk
 from tkinter import ttk
 from datetime import datetime
 from pathlib import Path
+import os
 import shutil
 import requests
 
@@ -136,7 +137,8 @@ class EthernetSyncApp:
                         stderr=subprocess.PIPE,
                         text=True,
                     )
-                    with open(recovered_path) as f: 
+                    
+                    with open(recovered_path, 'rb') as f: 
                         files = {
                             'files': f
                         }
