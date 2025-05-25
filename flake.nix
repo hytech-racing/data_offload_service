@@ -17,7 +17,7 @@
 
             pkgs = import nixpkgs {
                 overlays = my_overlays;
-                system = "aarch64-darwin"; 
+                system = "x86_64-linux"; 
             };
 
         in

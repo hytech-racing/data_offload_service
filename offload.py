@@ -9,7 +9,7 @@ from tkinter import ttk
 from datetime import datetime
 from pathlib import Path
 import shutil
-import mcap.recovery
+import requests
 
 # Configuration variables
 INTERFACE = "enp0s13f0u1"  # Replace with your Ethernet interface
@@ -20,6 +20,9 @@ REMOTE_DIR = "/home/nixos/recordings"
 SSH_KEY = "~/.ssh/id_ed25519"
 SSH_PORT = 22
 SYNC_DEST_BASE = "/home/hytech/hytech_mcaps/synced_data"  # Where timestamped folders will be stored
+
+
+UPLOAD_URL = "https://hytechracing.duckdns.org/mcaps/bulk_upload"
 
 class EthernetSyncApp:
     def __init__(self, root):
@@ -121,13 +124,25 @@ class EthernetSyncApp:
                 ]
                 try:
                     subprocess.run(rsync_command, check=True)
+
+                    base_name = os.path.splitext(file)[0]
+                    recovered_filename = f"{base_name}-recovered.mcap"
+                    recovered_path = f"/home/hytech/hytech_data/temp_mcap_dir/{recovered_filename}"
+
                     result = subprocess.run(
-                        ["mcap", "recover", file, "-o", file.strip(".mcap") + "-recovered.mcap"],
+                        ["mcap", "recover", file, "-o", recovered_path],
                         check=True,
                         stdout=subprocess.PIPE,
                         stderr=subprocess.PIPE,
                         text=True,
                     )
+                    with open(recovered_path) as f: 
+                        files = {
+                            'files': f
+                        }
+
+                        response = requests.post(UPLOAD_URL, files=files)
+
                     self.progress_bar["value"] = idx
                     self.file_count_label.config(text=f"Files transferred (rsync): {idx} / {len(new_files)}")
                     self.root.update_idletasks()  # Refresh the progress bar and label
